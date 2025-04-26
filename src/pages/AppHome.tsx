@@ -1,39 +1,50 @@
 
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Helmet } from "react-helmet";
+import AppLayout from "@/components/AppLayout";
+import Moments from "@/components/Moments";
+import Feed from "@/components/Feed";
+import GlimesSection from "@/components/GlimesSection";
+import CreatePost from "@/components/CreatePost";
 
 const AppHome = () => {
   useEffect(() => {
-    // Get username from localStorage or use default
-    // This would normally come from authentication
-    const username = "User";
-    document.title = `Welcome, ${username} | SparkUnion`;
+    document.title = "SparkUnion | Your Feed";
   }, []);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full text-center space-y-6">
-        <div className="bg-secondary/80 px-4 py-2 rounded-full inline-block">
-          <span className="text-primary font-heading font-bold text-xl">SparkUnion</span>
+    <>
+      <Helmet>
+        <meta name="description" content="Your personalized feed on SparkUnion. Connect with friends, share moments, and discover new content." />
+        <meta name="keywords" content="social media, sparkxunion, feed, friends, moments, content" />
+        <meta property="og:title" content="SparkUnion | Your Feed" />
+        <meta property="og:description" content="Your personalized feed on SparkUnion. Connect with friends, share moments, and discover new content." />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="SparkUnion | Your Feed" />
+        <meta name="twitter:description" content="Your personalized feed on SparkUnion. Connect with friends, share moments, and discover new content." />
+      </Helmet>
+
+      <AppLayout>
+        <div className="py-4 px-4 md:px-0 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Feed</h1>
+          <CreatePost />
         </div>
+
+        {/* Stories/Moments row */}
+        <Moments />
         
-        <h1 className="text-4xl font-bold">Welcome to SparkUnion!</h1>
-        <p className="text-muted-foreground">
-          Your account has been created successfully. This is where your personalized
-          feed and dashboard would appear.
-        </p>
-        
-        <div className="grid grid-cols-2 gap-4 pt-4">
-          <Button variant="outline" asChild>
-            <Link to="/">Back to Home</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/">Explore Content</Link>
-          </Button>
+        {/* Feed content */}
+        <div className="px-4 md:px-0">
+          <Feed />
         </div>
-      </div>
-    </div>
+
+        {/* Glimes section */}
+        <div className="mt-8 px-4 md:px-0">
+          <GlimesSection />
+        </div>
+      </AppLayout>
+    </>
   );
 };
 
