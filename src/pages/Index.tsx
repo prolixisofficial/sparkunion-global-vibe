@@ -15,13 +15,15 @@ const Index = () => {
     const animateOnScroll = () => {
       const elements = document.querySelectorAll('[data-aos]');
       
-      elements.forEach(element => {
-        const elementPosition = element.getBoundingClientRect().top;
-        const windowHeight = window.innerHeight;
-        
-        if (elementPosition < windowHeight * 0.85) {
-          element.classList.add('animate-slide-up');
-          element.style.opacity = '1';
+      elements.forEach((element) => {
+        if (element instanceof HTMLElement) {
+          const elementPosition = element.getBoundingClientRect().top;
+          const windowHeight = window.innerHeight;
+          
+          if (elementPosition < windowHeight * 0.85) {
+            element.classList.add('animate-slide-up');
+            element.style.opacity = '1';
+          }
         }
       });
     };
