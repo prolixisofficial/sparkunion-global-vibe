@@ -14,29 +14,60 @@ export default function Feed() {
     try {
       setLoading(true);
       
-      // Get posts with profiles and tags
-      const { data, error } = await supabase
+      // Get posts
+      const { data: postsData, error: postsError } = await supabase
         .from("posts")
-        .select(`
-          *,
-          profile:profiles(*),
-          tags:post_tags(tag:tags(*))
-        `)
+        .select()
         .order("created_at", { ascending: false });
       
-      if (error) {
-        throw error;
-      }
+      if (postsError) throw postsError;
       
-      if (data) {
-        // Transform the nested tag structure to match our type
-        const transformedPosts = data.map((post: any) => ({
-          ...post,
-          tags: post.tags?.map((tagItem: any) => tagItem.tag) || []
-        }));
+      // Get profiles for post authors
+      const userIds = [...new Set(postsData.map(post => post.user_id))];
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select()
+        .in("id", userIds);
+      
+      if (profilesError) throw profilesError;
+      
+      // Get tags for posts
+      const postIds = postsData.map(post => post.id);
+      
+      const { data: postTagsData, error: postTagsError } = await supabase
+        .from("post_tags")
+        .select("post_id, tag_id")
+        .in("post_id", postIds);
+      
+      if (postTagsError) throw postTagsError;
+      
+      // Get tag details
+      const tagIds = [...new Set(postTagsData.map(pt => pt.tag_id))];
+      
+      const { data: tagsData, error: tagsError } = await supabase
+        .from("tags")
+        .select()
+        .in("id", tagIds);
+      
+      if (tagsError) throw tagsError;
+      
+      // Combine data
+      const enrichedPosts = postsData.map(post => {
+        const profile = profilesData.find(p => p.id === post.user_id);
+        const postTagIds = postTagsData
+          .filter(pt => pt.post_id === post.id)
+          .map(pt => pt.tag_id);
+        const tags = tagsData.filter(tag => postTagIds.includes(tag.id));
         
-        setPosts(transformedPosts);
-      }
+        return {
+          ...post,
+          profile,
+          tags
+        };
+      });
+      
+      setPosts(enrichedPosts);
     } catch (error: any) {
       console.error("Error fetching posts:", error);
       toast({

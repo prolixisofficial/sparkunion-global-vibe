@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Heart, MessageSquare, Share2, BookmarkIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -18,6 +19,26 @@ export default function Post({ post, refreshPosts }: PostProps) {
   const { toast } = useToast();
   const [likeCount, setLikeCount] = useState(post.likes_count || 0);
   const [isLiked, setIsLiked] = useState(false);
+  
+  useEffect(() => {
+    // Check if user has liked this post
+    if (user) {
+      const checkLikeStatus = async () => {
+        const { data, error } = await supabase
+          .from('likes')
+          .select()
+          .eq('user_id', user.id)
+          .eq('post_id', post.id)
+          .maybeSingle();
+        
+        if (!error && data) {
+          setIsLiked(true);
+        }
+      };
+      
+      checkLikeStatus();
+    }
+  }, [user, post.id]);
   
   const handleLike = async () => {
     if (!user) {
@@ -38,7 +59,8 @@ export default function Post({ post, refreshPosts }: PostProps) {
         .from("likes")
         .insert({
           user_id: user.id,
-          post_id: post.id
+          post_id: post.id,
+          glime_id: null
         });
       
       if (error) {
@@ -50,6 +72,12 @@ export default function Post({ post, refreshPosts }: PostProps) {
           description: "Could not like this post",
           variant: "destructive",
         });
+      } else {
+        // Update post's like count
+        await supabase
+          .from("posts")
+          .update({ likes_count: likeCount + 1 })
+          .eq("id", post.id);
       }
     } else {
       // Remove like
@@ -73,6 +101,12 @@ export default function Post({ post, refreshPosts }: PostProps) {
           description: "Could not unlike this post",
           variant: "destructive",
         });
+      } else {
+        // Update post's like count
+        await supabase
+          .from("posts")
+          .update({ likes_count: likeCount - 1 })
+          .eq("id", post.id);
       }
     }
     
@@ -84,14 +118,18 @@ export default function Post({ post, refreshPosts }: PostProps) {
       {/* Post header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={post.profile?.avatar_url || ""} alt={post.profile?.full_name || ""} />
-            <AvatarFallback className="bg-primary/10">
-              {post.profile?.full_name?.charAt(0) || "U"}
-            </AvatarFallback>
-          </Avatar>
+          <Link to={`/app/profile/${post.user_id}`}>
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={post.profile?.avatar_url || ""} alt={post.profile?.full_name || ""} />
+              <AvatarFallback className="bg-primary/10">
+                {post.profile?.full_name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
           <div>
-            <div className="font-semibold">{post.profile?.full_name || "Anonymous"}</div>
+            <Link to={`/app/profile/${post.user_id}`} className="font-semibold hover:underline">
+              {post.profile?.full_name || "Anonymous"}
+            </Link>
             {post.profile?.id && (
               <div className="text-xs text-muted-foreground">
                 {post.profile?.id?.substring(0, 8)}

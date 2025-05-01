@@ -11,19 +11,51 @@ export default function MomentsList() {
   
   useEffect(() => {
     async function fetchMoments() {
-      const { data, error } = await supabase
-        .from("moments")
-        .select(`*, profile: profiles(*)`)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      
-      if (error) {
+      try {
+        // Fetch moments
+        const { data: momentsData, error: momentsError } = await supabase
+          .from("moments")
+          .select()
+          .order("created_at", { ascending: false })
+          .limit(20);
+        
+        if (momentsError) throw momentsError;
+        
+        // If no moments, return early
+        if (!momentsData || momentsData.length === 0) {
+          setMoments([]);
+          return;
+        }
+        
+        // Fetch profiles for moment creators
+        const userIds = [...new Set(momentsData.map(moment => moment.user_id))];
+        
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select()
+          .in("id", userIds);
+        
+        if (profilesError) throw profilesError;
+        
+        // Combine data
+        const enrichedMoments = momentsData.map(moment => {
+          const profile = profilesData.find(p => p.id === moment.user_id) || {
+            id: moment.user_id,
+            full_name: "Unknown",
+            avatar_url: null,
+            created_at: null,
+            updated_at: null
+          };
+          
+          return {
+            ...moment,
+            profile
+          };
+        }) as (Moment & { profile: Profile })[];
+        
+        setMoments(enrichedMoments);
+      } catch (error) {
         console.error("Error fetching moments:", error);
-        return;
-      }
-      
-      if (data) {
-        setMoments(data as (Moment & { profile: Profile })[]);
       }
     }
     
@@ -56,18 +88,18 @@ export default function MomentsList() {
           <div key={moment.id} className="flex flex-col items-center min-w-20">
             <div className="p-0.5 rounded-full bg-gradient-to-br from-red-500 to-blue-500">
               <Avatar className="h-16 w-16 border-2 border-background">
-                <AvatarImage src={moment.profile.avatar_url || ""} alt={moment.profile.full_name || ""} />
+                <AvatarImage src={moment.profile?.avatar_url || ""} alt={moment.profile?.full_name || ""} />
                 <AvatarFallback className="bg-primary/10">
-                  {moment.profile.full_name?.charAt(0) || "U"}
+                  {moment.profile?.full_name?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
             </div>
             <span className="text-xs mt-2 text-center truncate w-20">
-              {moment.profile.full_name?.split(" ")[0] || "User"}
+              {moment.profile?.full_name?.split(" ")[0] || "User"}
             </span>
           </div>
         ))}
       </div>
     </div>
   );
-}
+};

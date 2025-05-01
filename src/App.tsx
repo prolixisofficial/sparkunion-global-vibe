@@ -13,6 +13,9 @@ import AppHome from "./pages/AppHome";
 import NotFound from "./pages/NotFound";
 import PrivateRoute from "./components/PrivateRoute";
 import CreatePost from "./components/CreatePost";
+import ProfilePage from "./pages/ProfilePage";
+import GlimesPage from "./pages/GlimesPage";
+import ExplorePage from "./pages/ExplorePage";
 
 const queryClient = new QueryClient();
 
@@ -30,9 +33,10 @@ const App = () => (
               <Route path="/signup" element={<SignUp />} />
               <Route path="/app" element={<PrivateRoute><AppHome /></PrivateRoute>} />
               <Route path="/app/create" element={<PrivateRoute><CreatePost /></PrivateRoute>} />
-              <Route path="/app/profile" element={<PrivateRoute><AppHome /></PrivateRoute>} />
-              <Route path="/app/explore" element={<PrivateRoute><AppHome /></PrivateRoute>} />
-              <Route path="/app/glimes" element={<PrivateRoute><AppHome /></PrivateRoute>} />
+              <Route path="/app/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+              <Route path="/app/profile/:userId" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+              <Route path="/app/explore" element={<PrivateRoute><ExplorePage /></PrivateRoute>} />
+              <Route path="/app/glimes" element={<PrivateRoute><GlimesPage /></PrivateRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
